@@ -1367,7 +1367,6 @@ static void ProcessKernelDt() {
 }
 
 constexpr auto ANDROIDBOOT_PREFIX = "androidboot."sv;
-constexpr auto ANDROIDBOOT_VERIFIEDBOOTSTATE = "androidboot.verifiedbootstate"sv;
 
 static void ProcessKernelCmdline() {
     android::fs_mgr::ImportKernelCmdline([&](const std::string& key, const std::string& value) {
@@ -1394,24 +1393,10 @@ static void SetSafetyNetProps() {
     return;
 #endif
 
-    // Check whether verified boot state is yellow
-    auto isVerifiedBootYellow = false;
-    // This runs before keys are set as props, so we need to process them ourselves.
-    ImportKernelCmdline([&](const std::string& key, const std::string& value) {
-        if (key == ANDROIDBOOT_VERIFIEDBOOTSTATE && value == "yellow") {
-            isVerifiedBootYellow = true;
-        }
-    });
-    ImportBootconfig([&](const std::string& key, const std::string& value) {
-        if (key == ANDROIDBOOT_VERIFIEDBOOTSTATE && value == "yellow") {
-            isVerifiedBootYellow = true;
-        }
-    });
-
-    // Spoof verified boot state to green only when it's yellow
-    if (isVerifiedBootYellow) {
-        InitPropertySet("ro.boot.verifiedbootstate", "green");
-    }
+    InitPropertySet("ro.boot.flash.locked", "1");
+    InitPropertySet("ro.boot.verifiedbootstate", "green");
+    InitPropertySet("ro.boot.veritymode", "enforcing");
+    InitPropertySet("ro.boot.vbmeta.device_state", "locked");
 }
 
 void PropertyInit() {
